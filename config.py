@@ -83,6 +83,12 @@ def parse_args():
                         help="output: rtcpush/webrtc/rtmp/virtualcam")
     parser.add_argument('--push_url', type=str,
                         default='http://localhost:1985/rtc/v1/whip/?app=live&stream=livestream')
+    parser.add_argument('--livekit_url',   type=str, default='',
+                        help='LiveKit WebSocket URL (wss://...)')
+    parser.add_argument('--livekit_token', type=str, default='',
+                        help='LiveKit access token for avatar participant')
+    parser.add_argument('--livekit_room',  type=str, default='',
+                        help='LiveKit room name')
     parser.add_argument('--max_session', type=int, default=5)
     parser.add_argument('--listenport', type=int, default=8010,
                         help="web listen port")

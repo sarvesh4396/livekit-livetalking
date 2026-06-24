@@ -156,11 +156,13 @@ def main():
     rtc_manager = RTCManager(opt)
     # share avatar_sessions (RTCManager handles it but routes.py expects it)
     
-    if opt.transport=='virtualcam' or opt.transport=='rtmp':
+    if opt.transport in ('virtualcam', 'rtmp', 'livekit'):
         thread_quit = Event()
         params = {}
-        # session 0 for virtualcam
         session_manager.add_session('0', build_avatar_session('0', params))
+        if opt.transport == 'livekit':
+            # Connect to LiveKit room before the render thread starts pushing frames
+            session_manager.get_session('0').output.start()
         rendthrd = Thread(target=session_manager.get_session('0').render,args=(thread_quit,))
         rendthrd.start()
 

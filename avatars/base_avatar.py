@@ -106,10 +106,11 @@ class BaseAvatar:
             logger.error(f"TTS module {opt.tts} not found.")
 
         _output_modules = {
-            'webrtc': 'streamout.webrtc',
-            'rtcpush': 'streamout.webrtc',
-            'rtmp': 'streamout.rtmp',
-            'virtualcam': 'streamout.virtualcam'
+            'webrtc':     'streamout.webrtc',
+            'rtcpush':    'streamout.webrtc',
+            'rtmp':       'streamout.rtmp',
+            'virtualcam': 'streamout.virtualcam',
+            'livekit':    'streamout.livekit_output',
         }
 
         # 初始化 Output 模块

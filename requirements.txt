@@ -56,3 +56,6 @@ dashscope
 # Optional: remove these lines if you don't need local ASR
 funasr
 modelscope
+
+# LiveKit transport
+livekit-rtc
