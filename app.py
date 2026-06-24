@@ -161,8 +161,15 @@ def main():
         params = {}
         session_manager.add_session('0', build_avatar_session('0', params))
         if opt.transport == 'livekit':
-            # Connect to LiveKit room before the render thread starts pushing frames
-            session_manager.get_session('0').output.start()
+            _lk_session = session_manager.get_session('0')
+            if not hasattr(_lk_session, 'output'):
+                raise RuntimeError(
+                    "LiveKit output transport failed to load — "
+                    "run: pip install livekit"
+                )
+            # Start the event loop thread; the agent-worker will call /api/livekit/connect
+            # with the per-session URL + token once it receives the dispatched job.
+            _lk_session.output.start()
         rendthrd = Thread(target=session_manager.get_session('0').render,args=(thread_quit,))
         rendthrd.start()
 

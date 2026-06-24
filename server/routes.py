@@ -162,6 +162,24 @@ async def admin_config(request):
         return json_error(str(e))
 
 
+async def livekit_connect(request):
+    """Tell LiveTalking which LiveKit room to join. Called by the agent-worker on session start."""
+    try:
+        data = await request.json()
+        url   = data.get("livekit_url", "")
+        token = data.get("token", "")
+        if not url or not token:
+            return json_error("livekit_url and token are required")
+        session = session_manager.get_session('0')
+        if not session or not hasattr(session, 'output'):
+            return json_error("no livekit session available", code=503)
+        session.output.connect(url, token)
+        return json_ok(data={"status": "connected"})
+    except Exception as e:
+        logger.exception('livekit_connect exception:')
+        return json_error(str(e))
+
+
 async def admin_sessions(request):
     """Admin: 获取活跃的会话及其配置"""
     try:
@@ -202,6 +220,7 @@ def setup_routes(app):
     app.router.add_post("/is_speaking", is_speaking)
     app.router.add_get("/api/admin/config", admin_config)
     app.router.add_get("/api/admin/sessions", admin_sessions)
+    app.router.add_post("/api/livekit/connect", livekit_connect)
 
     # ── Local ASR endpoint (SenseVoice/FunASR) ── Issue #604 ──
     try:

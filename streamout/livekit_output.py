@@ -49,11 +49,20 @@ class LiveKitOutput(BaseOutput):
     # ------------------------------------------------------------------
 
     def start(self) -> None:
-        if not self.livekit_url or not self.livekit_token:
-            raise ValueError("livekit_url and livekit_token must be set to use livekit transport")
+        """Start the asyncio event loop thread. Connection happens via connect()."""
         self._loop = asyncio.new_event_loop()
         self._thread = threading.Thread(target=self._run_loop, daemon=True, name="livekit_out")
         self._thread.start()
+        logger.info("LiveKitOutput loop started — awaiting connect() call")
+
+    def connect(self, url: str, token: str) -> None:
+        """Connect (or reconnect) to a LiveKit room. Thread-safe; blocks until connected."""
+        self.livekit_url = url
+        self.livekit_token = token
+        if self._loop is None:
+            self.start()
+        self._connected.clear()
+        asyncio.run_coroutine_threadsafe(self._connect(), self._loop)
         if not self._connected.wait(timeout=30):
             raise RuntimeError("LiveKit connection timed out after 30s")
         logger.info("LiveKitOutput ready")
@@ -140,11 +149,21 @@ class LiveKitOutput(BaseOutput):
 
     def _run_loop(self) -> None:
         asyncio.set_event_loop(self._loop)
-        self._loop.run_until_complete(self._connect())
         self._loop.run_forever()
 
     async def _connect(self) -> None:
+        # Disconnect previous room if reconnecting
+        if self._room:
+            try:
+                await self._room.disconnect()
+            except Exception:
+                pass
+
         self._room = rtc.Room()
+        # Reset video so it's re-published on the new room's first frame
+        self._video_source = None
+        self._video_track = None
+        self._video_published.clear()
 
         # Publish audio track immediately on connect (no lazy-init needed)
         self._audio_source = rtc.AudioSource(sample_rate=16000, num_channels=1)
